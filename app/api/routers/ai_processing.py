@@ -1,6 +1,6 @@
 # app/api/routers/ai_processing.py
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile
 # Note: We no longer need UploadFile or File from fastapi here
 from app.models.schemas import ResearchQuery, SummarizeRequest, ImagePayload # <-- Import ImagePayload
 from app.services import ai_service
@@ -32,30 +32,24 @@ async def summarize_endpoint(request: SummarizeRequest):
 
 
 # --- THIS IS THE CORRECTED ENDPOINT ---
-@router.post("/analyze-image")
-async def analyze_image_endpoint(payload: ImagePayload):
-    try:
-        # A data URL looks like "data:image/png;base64,iVBORw0KGgo..."
-        # We need to extract the mime type and the actual base64 data
-        header, encoded_data = payload.image_data.split(',', 1)
-        
-        # Extract mime type (e.g., 'image/png')
-        match = re.search(r'data:(?P<mime_type>[\w/]+);base64', header)
-        if not match:
-            raise HTTPException(status_code=400, detail="Invalid Base64 data URL format")
-        mime_type = match.group('mime_type')
+@router.post("/upload-image") # Matches the URL in your JS
+async def handle_image_upload(file: UploadFile = File(...)):
+    # Check if the uploaded file is an image
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Please upload an image file.")
 
-        # Decode the Base64 string into bytes
-        image_bytes = base64.b64decode(encoded_data)
+    try:
+        # Read the raw bytes from the uploaded file
+        image_bytes = await file.read()
         
-        # Call the service function with the decoded bytes and mime type
-        model_output = await ai_service.analyze_image_with_gemini(
-            image_bytes=image_bytes, 
-            mime_type=mime_type
+        # Call your Gemini service function with the bytes
+        analysis_result = await ai_service.analyze_image_with_gemini(
+            image_bytes=image_bytes,
+            mime_type=file.content_type
         )
         
-        return {"filename": "image.png", "response": model_output} # Filename is now generic
-    except (base64.binascii.Error, ValueError) as e:
-        raise HTTPException(status_code=400, detail=f"Invalid Base64 data: {e}")
+        # Return the result
+        return {"filename": file.filename, "response": analysis_result}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
