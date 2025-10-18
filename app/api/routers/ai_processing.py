@@ -1,6 +1,6 @@
 # app/api/routers/ai_processing.py
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, HTTPException, UploadFile, File
 # Note: We no longer need UploadFile or File from fastapi here
 from app.models.schemas import ResearchQuery, SummarizeRequest, ImagePayload # <-- Import ImagePayload
 from app.services import ai_service
