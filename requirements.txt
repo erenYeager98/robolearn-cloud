@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+gunicorn
+pydantic
+pydantic-settings
+python-dotenv
+requests
+
+# Google Cloud Libraries
+google-cloud-aiplatform>=1.5.0
+google-cloud-speech
+google-cloud-texttospeech
+google-cloud-storage
