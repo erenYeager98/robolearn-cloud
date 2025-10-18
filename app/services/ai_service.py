@@ -1,9 +1,11 @@
 # app/services/ai_service.py
 
 import google.generativeai as genai
+import httpx
 from app.core.config import settings
 import io
 from PIL import Image # For processing image data
+import json
 
 # Configure the client library with your API key
 try:
@@ -103,3 +105,47 @@ async def analyze_image_with_gemini(image_bytes: bytes, mime_type: str) -> str:
     )
     
     return response.text
+
+async def generate_image_urls(question: str, emotion: str) -> list[str]:
+    """
+    Generates image URLs by getting search keywords from Gemini and then fetching
+    images using the Serper API.
+    """
+    try:
+        # 1. Generate Keywords with Gemini
+        model = genai.GenerativeModel(GEMINI_MODEL_ID)
+        
+        prompt = (
+            "You are an assistant that only outputs 3 to 5 short, comma-separated keywords for an image search. "
+            "Do not use numbered lists, explanations, or any other text. Just return the keywords.\n"
+            f"Query: {question}\n"
+            f"Emotion: {emotion}"
+        )
+        
+        response = await model.generate_content_async(prompt)
+        keywords = response.text.strip()
+        print(f"✨ Generated Keywords: {keywords}")
+
+        # 2. Fetch Image URLs with Serper API using httpx
+        url = "https://google.serper.dev/images"
+        payload = json.dumps({"q": keywords})
+        headers = {
+            'X-API-KEY': settings.SERPER_API_KEY,
+            'Content-Type': 'application/json'
+        }
+
+        async with httpx.AsyncClient() as client:
+            api_response = await client.post(url, headers=headers, content=payload)
+            api_response.raise_for_status()
+            data = api_response.json()
+
+        # 3. Extract top 10 image URLs
+        image_urls = [item["imageUrl"] for item in data.get("images", [])[:10]]
+        return image_urls
+
+    except httpx.HTTPStatusError as http_err:
+        print(f"HTTP error occurred while calling Serper API: {http_err}")
+        return []
+    except Exception as e:
+        print(f"An error occurred in generate_image_urls: {e}")
+        return []
