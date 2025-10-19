@@ -78,7 +78,7 @@ async def generate_images_endpoint(query: ResearchKeyword):
             return {"image_urls": []}
             
         print(image_urls)
-        return {"image_urls": image_urls}
+        return image_urls
     except Exception as e:
         # This catches unexpected errors during the process.
         print(e)
