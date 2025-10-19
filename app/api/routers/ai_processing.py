@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 # Note: We no longer need UploadFile or File from fastapi here
-from app.models.schemas import ResearchQuery, SummarizeRequest, ImagePayload # <-- Import ImagePayload
+from app.models.schemas import ResearchKeyword, ResearchQuery, SummarizeRequest, ImagePayload # <-- Import ImagePayload
 from app.services import ai_service
 import base64
 import re
@@ -62,7 +62,7 @@ async def analyze_image_endpoint(payload: ImagePayload):
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.post("/gen_keywords")
-async def generate_images_endpoint(query: ResearchQuery):
+async def generate_images_endpoint(query: ResearchKeyword):
     """
     This endpoint takes a question and an emotion, generates relevant keywords,
     and returns a list of image URLs from the Serper API.
@@ -77,7 +77,9 @@ async def generate_images_endpoint(query: ResearchQuery):
             # in the service layer that was handled gracefully.
             return {"image_urls": []}
             
+        print(image_urls)
         return {"image_urls": image_urls}
     except Exception as e:
         # This catches unexpected errors during the process.
+        print(e)
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")

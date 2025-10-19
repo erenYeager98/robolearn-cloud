@@ -6,6 +6,10 @@ class ResearchQuery(BaseModel):
     emotion: str
     level: int
 
+class ResearchKeyword(BaseModel):
+    question: str
+    emotion: str
+    
 class SummarizeRequest(BaseModel):
     content: str
 
