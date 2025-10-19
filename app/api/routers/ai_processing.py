@@ -16,7 +16,8 @@ async def research_endpoint(query: ResearchQuery):
     try:
         answer = await ai_service.generate_research_response_with_gemini(
             question=query.question,
-            emotion=query.emotion
+            emotion=query.emotion,
+            level=query.level
         )
         return {"answer": answer}
     except Exception as e:

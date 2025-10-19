@@ -17,9 +17,53 @@ except Exception as e:
 # Use a compatible model name for the Google AI API
 GEMINI_MODEL_ID = "gemini-flash-latest" # <-- Correct and complete identifier
 
-async def generate_research_response_with_gemini(question: str, emotion: str) -> str:
-    """Generates a response using the Google AI Gemini API."""
+# async def generate_research_response_with_gemini(question: str, emotion: str, level: int) -> str:
+#     """Generates a response using the Google AI Gemini API."""
     
+#     if emotion.lower() in ["neutral", "sad"]:
+#         emotion_instruction = "The user is in a calm or low mood, so explain the topic thoroughly but in a gentle and easy-to-follow manner."
+#     elif emotion.lower() in ["happy", "excited", "joy"]:
+#         emotion_instruction = "The user is in a good mood, so you can explain the topic with enthusiasm, depth, and engaging details."
+#     else:
+#         emotion_instruction = "Adjust your response tone to suit the user's emotion. Prioritize clarity and depth."
+
+#     system_prompt = (
+#         "You are a knowledgeable, friendly teacher who explains topics thoroughly.\n"
+#         "Always respond with a detailed, structured explanation of about 1000-1200 words.\n"
+#         "Break the content into clear sections or paragraphs, and use examples when appropriate.\n"
+#         "If the query is vague, ask for clarification before explaining.\n"
+#         f"{emotion_instruction}\n"
+#         "Your tone should remain helpful, supportive, engaging, and educational."
+#     )
+    
+#     prompt = f"Query: {question}\nEmotion: {emotion}"
+            
+#     model = genai.GenerativeModel(
+#         GEMINI_MODEL_ID,
+#         system_instruction=system_prompt
+#     )
+    
+#     response = await model.generate_content_async(
+#         prompt,
+#         generation_config=genai.types.GenerationConfig(
+#             temperature=0.7,
+#             top_p=0.9,
+#             max_output_tokens=4096,
+#         )
+#     )
+    
+#     return response.text
+
+import google.generativeai as genai
+
+# Assume genai is configured with your API key
+# genai.configure(api_key="YOUR_API_KEY")
+# GEMINI_MODEL_ID = "gemini-1.5-flash" # or your preferred model
+
+async def generate_research_response_with_gemini(question: str, emotion: str, level: int) -> str:
+    """Generates a response using the Google AI Gemini API."""
+
+    # --- Logic for handling the 'emotion' parameter ---
     if emotion.lower() in ["neutral", "sad"]:
         emotion_instruction = "The user is in a calm or low mood, so explain the topic thoroughly but in a gentle and easy-to-follow manner."
     elif emotion.lower() in ["happy", "excited", "joy"]:
@@ -27,16 +71,29 @@ async def generate_research_response_with_gemini(question: str, emotion: str) ->
     else:
         emotion_instruction = "Adjust your response tone to suit the user's emotion. Prioritize clarity and depth."
 
+    # --- Logic for handling the 'level' parameter ---
+    if level == 1:
+        level_instruction = "Explain the topic in a beginner-friendly way. Avoid jargon and use simple analogies."
+        word_count_instruction = "Your explanation should be about 250-400 words."
+    elif level == 2:
+        level_instruction = "Explain the topic for an intermediate learner. You can assume some basic knowledge but should still define key terms."
+        word_count_instruction = "Your explanation should be about 450-600 words."
+    else: # Default to level 3 for advanced or any other value
+        level_instruction = "Explain the topic thoroughly for an advanced learner. Provide in-depth details, nuances, and complex examples where appropriate."
+        word_count_instruction = "Your explanation should be about 800-1000 words."
+
+    # --- Dynamically build the system prompt ---
     system_prompt = (
         "You are a knowledgeable, friendly teacher who explains topics thoroughly.\n"
-        "Always respond with a detailed, structured explanation of about 1000-1200 words.\n"
+        f"{word_count_instruction}\n"
+        f"{level_instruction}\n"
         "Break the content into clear sections or paragraphs, and use examples when appropriate.\n"
         "If the query is vague, ask for clarification before explaining.\n"
         f"{emotion_instruction}\n"
         "Your tone should remain helpful, supportive, engaging, and educational."
     )
     
-    prompt = f"Query: {question}\nEmotion: {emotion}"
+    prompt = f"Query: {question}\nEmotion: {emotion}\nLevel: {level}"
             
     model = genai.GenerativeModel(
         GEMINI_MODEL_ID,
